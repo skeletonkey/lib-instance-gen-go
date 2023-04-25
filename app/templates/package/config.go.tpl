@@ -1,6 +1,6 @@
 package {{ .PackageName }}
 
-import "github.com/skeletonkey/rachio-next-run/app/config"
+import "github.com/skeletonkey/lib-core-go/config"
 
 var cfg *{{ .PackageName }}
 

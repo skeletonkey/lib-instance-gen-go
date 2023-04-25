@@ -9,6 +9,7 @@ install:
 	cp bin/{{ .BinaryName }} /usr/local/sbin/{{ .BinaryName }}
 
 golib-latest:
+	go get -u github.com/skeletonkey/lib-core-go@latest
 	go get -u github.com/skeletonkey/lib-instance-gen-go@latest
 
 	go mod tidy
