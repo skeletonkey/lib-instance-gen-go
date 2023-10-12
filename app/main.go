@@ -1,6 +1,8 @@
-// Package app is a library for creating a bare-bones application with boilerplate files taken
-// care of. The long term goal is to be the basis of all Go applications allowing for quick propagation of updates,
+// Package app is a library for creating a bare-bones application with boilerplate files taken care of.
+// The long-term goal is to be the basis of all Go applications allowing for quick propagation of updates,
 // bug fixes, and new features.
+//
+// Reference README.md for examples.
 //
 //	app := instance_gen.NewApp("rachio-next-run", "app")
 //	app.WithPackages("logger", "pushover", "rachio").
@@ -21,9 +23,14 @@ import (
 //go:embed all:templates
 var templatesFS embed.FS
 
-const templateBaseDir = "templates"
-const mkfilesSubDir = "Makefile"
-const warning = "lib-instance-gen-go: File auto generated -- DO NOT EDIT!!!\n"
+const (
+	cgoEnabled      = "CGOEnabled"
+	goVersion       = "GoVersion"
+	dependencies    = "dependencies"
+	templateBaseDir = "templates"
+	mkfilesSubDir   = "Makefile"
+	warning         = "lib-instance-gen-go: File auto generated -- DO NOT EDIT!!!\n"
+)
 
 var templateExts = map[string]string{
 	"go":     ".go.tpl",
@@ -38,19 +45,20 @@ var warnings = map[string]string{
 
 // App struct containing necessary information for a new application
 type App struct {
-	binaryName string // name of the binary the 'make' will produce
-	dir        string // subdirectory which will contain the program's source code
+	binaryName string         // name of the binary the 'make' will produce
+	dir        string         // subdirectory which will contain the program's source code
+	settings   map[string]any // misc settings
 }
 
 // NewApp returns the struct for a new applications which allows for generating boilerplate files.
 //   - binaryName is used by the Makefile for the build command
 //   - dir is the subdirectory that packages will be created in
 func NewApp(binaryName string, dir string) App {
-	return App{binaryName: binaryName, dir: dir}
+	return App{binaryName: binaryName, dir: dir, settings: make(map[string]any)}
 }
 
 // WithPackages takes a list of strings which results in creating a skeleton subdirectory for each.
-// This sets up
+// Foreach package listed the following will be created:
 //   - config.go - integration with github.com/skeletonkey/rachio-next-run/app/config
 func (a App) WithPackages(packageNames ...string) App {
 	for _, name := range packageNames {
@@ -69,20 +77,44 @@ func (a App) WithPackages(packageNames ...string) App {
 	return a
 }
 
+// WithCGOEnabled will add CGO_ENABLED=1 to the build statement
+func (a App) WithCGOEnabled() App {
+	a.settings[cgoEnabled] = true
+	return a
+}
+
+// WithDependencies received a list of strings that are Go libraries that should only be updated with 'make golib-latest'
+func (a App) WithDependencies(deps ...string) App {
+	a.settings[dependencies] = deps
+	return a
+}
+
 // WithGithubWorkflows sets up the specified workflows.
 // Current supported work flows:
 //   - linter - on pull request for all branches
 //   - test - on pull request for all branches
 func (a App) WithGithubWorkflows(flows ...string) App {
+	tmplArgs := templateArgs{}
+	if ver, ok := a.settings[goVersion]; ok {
+		tmplArgs.GoVersion = ver.(string)
+	}
+
 	for _, name := range flows {
 		generateTemplate(generateTemplateArgs{
 			fileType:       "yml",
 			outputName:     name + ".yml",
 			outputSubDir:   path.Join(".github", "workflows"),
+			templateArgs:   tmplArgs,
 			templateName:   name + templateExts["yml"],
 			templateSubDir: "github_workflows",
 		})
 	}
+	return a
+}
+
+// WithGoVersion provide the current version of Go to use for github actions
+func (a App) WithGoVersion(ver string) App {
+	a.settings[goVersion] = ver
 	return a
 }
 
@@ -96,6 +128,19 @@ func (a App) WithMakefile() App {
 	if err != nil {
 		panic(fmt.Errorf("unable to read dir (%s): %s", mkfilesSubDir, err))
 	}
+
+	tmplArgs := templateArgs{BinaryName: a.binaryName}
+	if yes, ok := a.settings[cgoEnabled]; ok && yes.(bool) {
+		tmplArgs.BuildEnvArgs = "CGO_ENABLED=1 "
+	}
+	if deps, ok := a.settings[dependencies]; ok {
+		depString := ""
+		for _, dep := range deps.([]string) {
+			depString = fmt.Sprintf("%sgo get -u %s\n\t", depString, dep)
+		}
+		tmplArgs.Dependencies = depString
+	}
+
 	for _, node := range nodes {
 		generateTemplate(generateTemplateArgs{
 			fileType:       "mkfile",
@@ -103,7 +148,7 @@ func (a App) WithMakefile() App {
 			outputSubDir:   "",
 			templateName:   node.Name(),
 			templateSubDir: mkfilesSubDir,
-			templateArgs:   templateArgs{BinaryName: a.binaryName},
+			templateArgs:   tmplArgs,
 		})
 	}
 	return a
@@ -118,8 +163,11 @@ type generateTemplateArgs struct {
 	templateArgs   templateArgs // args that are fed to text/template
 }
 type templateArgs struct {
-	BinaryName  string // name of the executable program
-	PackageName string // name of the package
+	BinaryName   string // name of the executable program
+	BuildEnvArgs string // any env args that are needed when building the app
+	Dependencies string // see WithDependencies
+	GoVersion    string // see WithGoVersion
+	PackageName  string // name of the package
 }
 
 func generateTemplate(args generateTemplateArgs) {
