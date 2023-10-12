@@ -136,7 +136,7 @@ func (a App) WithMakefile() App {
 	if deps, ok := a.settings[dependencies]; ok {
 		depString := ""
 		for _, dep := range deps.([]string) {
-			depString = fmt.Sprintf("%sgo get -u %s\n\t", depString, dep)
+			depString = fmt.Sprintf("%sgo get -u %s@latest\n\t", depString, dep)
 		}
 		tmplArgs.Dependencies = depString
 	}
