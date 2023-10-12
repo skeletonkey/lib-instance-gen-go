@@ -35,11 +35,13 @@ const (
 var templateExts = map[string]string{
 	"go":     ".go.tpl",
 	"mkfile": ".tpl",
+	"toml":   ".tpl",
 	"yml":    ".yml.tpl",
 }
 var warnings = map[string]string{
 	"go":     "// " + warning,
 	"mkfile": "// " + warning,
+	"toml":   "# " + warning,
 	"yml":    "# " + warning,
 }
 
@@ -109,6 +111,16 @@ func (a App) WithGithubWorkflows(flows ...string) App {
 			templateSubDir: "github_workflows",
 		})
 	}
+
+	// this belongs somewhere else - maybe the future generate method
+	generateTemplate(generateTemplateArgs{
+		fileType:       "toml",
+		outputName:     ".golangci.toml",
+		outputSubDir:   "",
+		templateArgs:   templateArgs{},
+		templateName:   ".golangci.toml",
+		templateSubDir: "",
+	})
 	return a
 }
 
