@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 	"text/template"
 )
 
@@ -25,10 +26,12 @@ var templatesFS embed.FS
 
 const (
 	cgoEnabled      = "CGOEnabled"
-	goVersion       = "GoVersion"
 	dependencies    = "dependencies"
-	templateBaseDir = "templates"
+	goModFile       = "go.mod"
+	goModPermission = 0644
+	goVersion       = "GoVersion"
 	mkfilesSubDir   = "Makefile"
+	templateBaseDir = "templates"
 	warning         = "lib-instance-gen-go: File auto generated -- DO NOT EDIT!!!\n"
 )
 
@@ -125,8 +128,27 @@ func (a App) WithGithubWorkflows(flows ...string) App {
 }
 
 // WithGoVersion provide the current version of Go to use for github actions
+// and the go.mod file
 func (a App) WithGoVersion(ver string) App {
 	a.settings[goVersion] = ver
+
+	_, err := os.Stat(goModFile)
+	if err == nil { // we have a go mod file and we can replace the version
+		data, err := os.ReadFile(goModFile)
+		if err != nil {
+			panic(fmt.Errorf("unable to read go.mod file (%s): %s\n", goModFile, err))
+		}
+
+		pattern := regexp.MustCompile(`(?m)$\s*go \d+\.\d+(\.\d+)?\s*$`)
+		newData := pattern.ReplaceAll(data, []byte("\n\ngo "+ver+"\n"))
+
+		err = os.WriteFile(goModFile, []byte(newData), goModPermission)
+		if err != nil {
+			panic(fmt.Errorf("unable to write go.mod file (%s): %s\n", goModFile, err))
+		}
+
+	}
+
 	return a
 }
 
