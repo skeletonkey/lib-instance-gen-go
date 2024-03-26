@@ -31,7 +31,7 @@ func main() {
 		WithDependencies(
 			"github.com/labstack/echo/v4",
 		).
-		WithGithubWorkflows("linter", "test").
+		WithGithubWorkflows("changelog", "linter", "test").
 		WithGoVersion("1.22").
 		WithCGOEnabled().
 		WithMakefile()
