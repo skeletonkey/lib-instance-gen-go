@@ -28,7 +28,13 @@ import instanceGen "github.com/skeletonkey/lib-instance-gen-go/app"
 func main() {
 	app := instanceGen.NewApp("rachio-next-run", "app")
 	app.WithPackages("logger", "pushover", "rachio").
+		WithDependencies(
+			"github.com/labstack/echo/v4",
+		).
 		WithGithubWorkflows("linter", "test").
+		WithGoVersion("1.22").
+		WithCGOEnabled().
 		WithMakefile()
+
 }
 ```
