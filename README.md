@@ -35,6 +35,7 @@ func main() {
 		).
 		WithGithubWorkflows("changelog", "linter", "test").
 		WithCGOEnabled().
+		WithConfig().
 		WithMakefile()
 
 }

@@ -1,3 +1,6 @@
+# v0.6.0
+- add WithConfig
+
 # v0.5.0
 - add changelog watch workflow
 - fix linter workflow
