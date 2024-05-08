@@ -88,6 +88,22 @@ func (a App) WithCGOEnabled() App {
 	return a
 }
 
+// WithConfig adds a config file for the main app. Config 
+func (a App) WithConfig() App {
+	templateArgs := templateArgs{
+		ConfigName: a.dir,
+	}
+	generateTemplate(generateTemplateArgs{
+		fileType:       "go",
+		outputName:     "config.go",
+		outputSubDir:   a.dir,
+		templateName:   "config" + templateExts["go"],
+		templateSubDir: "",
+		templateArgs:   templateArgs,
+	})
+	return a
+}
+
 // WithDependencies received a list of strings that are Go libraries that should only be updated with 'make golib-latest'
 func (a App) WithDependencies(deps ...string) App {
 	a.settings[dependencies] = deps
@@ -199,6 +215,7 @@ type generateTemplateArgs struct {
 type templateArgs struct {
 	BinaryName   string // name of the executable program
 	BuildEnvArgs string // any env args that are needed when building the app
+	ConfigName   string // name of the config element for the main program
 	Dependencies string // see WithDependencies
 	GoVersion    string // see WithGoVersion
 	PackageName  string // name of the package
