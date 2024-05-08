@@ -1,3 +1,6 @@
+# v0.6.1
+- forgot to add the template file for app level config
+
 # v0.6.0
 - add WithConfig
 
