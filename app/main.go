@@ -96,7 +96,7 @@ func (a App) WithCGOEnabled() App {
 	return a
 }
 
-// WithConfig adds a config file for the main app. Config 
+// WithConfig adds a config file for the main app. Config
 func (a App) WithConfig() App {
 	templateArgs := templateArgs{
 		ConfigName: a.dir,
