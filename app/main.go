@@ -65,8 +65,16 @@ func NewApp(binaryName string, dir string) App {
 // WithPackages takes a list of strings which results in creating a skeleton subdirectory for each.
 // Foreach package listed the following will be created:
 //   - config.go - integration with github.com/skeletonkey/rachio-next-run/app/config
-func (a App) WithPackages(packageNames ...string) App {
-	for _, name := range packageNames {
+func (a App) WithPackages(packageNames []string) App {
+	a.settings["packages"] = packageNames
+	return a
+}
+
+func (a App) _generatePackages() App {
+	if _, found := a.settings["packages"]; !found {
+		return a
+	}
+	for _, name := range a.settings["packages"] {
 		templateArgs := templateArgs{
 			PackageName: name,
 		}
