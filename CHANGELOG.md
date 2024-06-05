@@ -1,3 +1,8 @@
+# v0.7.0
+- https://github.com/skeletonkey/lib-instance-gen-go/issues/4
+  - add `SetupApp` so that With* call can happen in any order
+  - add `Generate` to create application files
+
 # v0.6.1
 - forgot to add the template file for app level config
 
