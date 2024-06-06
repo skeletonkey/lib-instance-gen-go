@@ -21,6 +21,7 @@ import (
 	"os"
 	"path"
 	"regexp"
+	"strings"
 	"text/template"
 )
 
@@ -28,14 +29,15 @@ import (
 var templatesFS embed.FS
 
 const (
-	cgoEnabled      = "CGOEnabled"
-	dependencies    = "dependencies"
-	goModFile       = "go.mod"
-	goModPermission = 0644
-	goVersion       = "GoVersion"
-	mkfilesSubDir   = "Makefile"
-	templateBaseDir = "templates"
-	warning         = "lib-instance-gen-go: File auto generated -- DO NOT EDIT!!!\n"
+	cgoEnabled         = "CGOEnabled"
+	codeOwnersFileName = "CODEOWNERS"
+	dependencies       = "dependencies"
+	goModFile          = "go.mod"
+	goVersion          = "GoVersion"
+	mkfilesSubDir      = "Makefile"
+	newFilePermission  = 0644
+	templateBaseDir    = "templates"
+	warning            = "lib-instance-gen-go: File auto generated -- DO NOT EDIT!!!\n"
 )
 
 type setupOp func(App) error
@@ -47,10 +49,11 @@ var templateExts = map[string]string{
 	"yml":    ".yml.tpl",
 }
 var warnings = map[string]string{
-	"go":     "// " + warning,
-	"mkfile": "// " + warning,
-	"toml":   "# " + warning,
-	"yml":    "# " + warning,
+	codeOwnersFileName: "# " + warning,
+	"go":               "// " + warning,
+	"mkfile":           "// " + warning,
+	"toml":             "# " + warning,
+	"yml":              "# " + warning,
 }
 
 // App struct containing necessary information for a new application
@@ -81,6 +84,39 @@ func (a App) Generate() {
 		if err != nil {
 			panic(err)
 		}
+	}
+}
+
+// WithCodeOwners creates a CODEOWNERS file with the provided codeowners configuration.
+// This is provided for simple CODEOWNERS use cases to centralize all project configurations in the "init.go" file.
+// Each string provided will be written on a single line, which provides flexibility.
+// However, once the file becomes complicated, it will be best to create the file manually.
+func (_ App) WithCodeOwners(codeOwners ...string) setupOp {
+	if len(codeOwners) == 0 {
+		return nil
+	}
+
+	return func(_ App) error {
+		file, err := os.OpenFile(codeOwnersFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, newFilePermission)
+		if err != nil {
+			return fmt.Errorf("unable to write file (%s): %s", codeOwnersFileName, err)
+		}
+		defer func() {
+			_ = file.Close()
+		}()
+
+		warning, found := warnings[codeOwnersFileName]
+		if !found {
+			return fmt.Errorf("unable to file a 'warnings' entry for %s", codeOwnersFileName)
+		}
+		if _, err := file.WriteString(warning); err != nil {
+			return fmt.Errorf("unable to write warning to file (%s): %s", codeOwnersFileName, err)
+		}
+		if _, err := file.WriteString(strings.Join(codeOwners, "\n")); err != nil {
+			return fmt.Errorf("unable to write codeOwners (%s) to file (%s): %s", codeOwners, codeOwnersFileName, err)
+		}
+
+		return nil
 	}
 }
 
@@ -196,7 +232,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 			pattern := regexp.MustCompile(`(?m)$\s*go \d+\.\d+(\.\d+)?\s*$`)
 			newData := pattern.ReplaceAll(data, []byte("\n\ngo "+ver+"\n"))
 
-			err = os.WriteFile(goModFile, newData, goModPermission)
+			err = os.WriteFile(goModFile, newData, newFilePermission)
 			if err != nil {
 				return fmt.Errorf("unable to write go.mod file (%s): %s\n", goModFile, err)
 			}
@@ -270,7 +306,7 @@ func generateTemplate(args generateTemplateArgs) {
 			panic(fmt.Errorf("unable to create directory structure (%s): %s", args.outputSubDir, err))
 		}
 	}
-	f, err := os.Create(outputFileName)
+	f, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, newFilePermission)
 	if err != nil {
 		panic(fmt.Errorf("unable to create file (%s): %s", outputFileName, err))
 	}
