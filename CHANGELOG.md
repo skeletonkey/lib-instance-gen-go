@@ -2,6 +2,10 @@
 - https://github.com/skeletonkey/lib-instance-gen-go/issues/8
   - add `WithCodeOwners` method to add simple CODEOWNERS file
   - standardized on os.OpenFile when overwriting files
+- https://github.com/skeletonkey/lib-instance-gen-go/issues/20
+  - removed the changelog workflow
+    - NOTE: changelog workflow should be manually deleted
+  - added an example pull_request_template.md which can be manually added to projects
 
 # v0.7.0
 - https://github.com/skeletonkey/lib-instance-gen-go/issues/4

@@ -33,7 +33,7 @@ func main() {
         app.WithDependencies(
             "github.com/labstack/echo/v4",
         ),
-        app.WithGithubWorkflows("changelog", "linter", "test"),
+        app.WithGithubWorkflows("linter", "test"),
         app.WithMakefile(),
         app.WithGoVersion("1.22"),
         app.WithPackages("logger", "pushover", "rachio"),
