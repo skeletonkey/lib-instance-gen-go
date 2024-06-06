@@ -1,3 +1,8 @@
+# v0.7.1
+- https://github.com/skeletonkey/lib-instance-gen-go/issues/8
+  - add `WithCodeOwners` method to add simple CODEOWNERS file
+  - standardized on os.OpenFile when overwriting files
+
 # v0.7.0
 - https://github.com/skeletonkey/lib-instance-gen-go/issues/4
   - add `SetupApp` so that With* call can happen in any order
