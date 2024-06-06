@@ -2,5 +2,3 @@
 - [ ] Added CHANGELOG.md entry
 - [ ] Reviewed my code
 - [ ] Updated any required documentation
-
-Delete this section before submitting the pull request.
