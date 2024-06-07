@@ -1,3 +1,8 @@
+# v0.7.2
+- https://github.com/skeletonkey/lib-instance-gen-go/issues/18
+  - update linters
+  - update workflow for running the linters
+
 # v0.7.1
 - https://github.com/skeletonkey/lib-instance-gen-go/issues/8
   - add `WithCodeOwners` method to add simple CODEOWNERS file
