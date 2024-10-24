@@ -35,6 +35,7 @@ const (
 	goModFile          = "go.mod"
 	goVersion          = "GoVersion"
 	mkfilesSubDir      = "Makefile"
+	newDirPermission   = 0750
 	newFilePermission  = 0644
 	templateBaseDir    = "templates"
 	warning            = "lib-instance-gen-go: File auto generated -- DO NOT EDIT!!!\n"
@@ -56,7 +57,7 @@ var warnings = map[string]string{
 	"yml":              "# " + warning,
 }
 
-// App struct containing necessary information for a new application
+// App struct containing necessary information for a new application.
 type App struct {
 	binaryName string         // name of the binary the 'make' will produce
 	dir        string         // subdirectory which will contain the program's source code
@@ -65,7 +66,7 @@ type App struct {
 }
 
 func noOp() setupOp {
-	return func (_ App) error {return nil}
+	return func(_ App) error { return nil }
 }
 
 // NewApp returns the struct for a new applications which allows for generating boilerplate files.
@@ -75,13 +76,13 @@ func NewApp(binaryName string, dir string) App {
 	return App{binaryName: binaryName, dir: dir, settings: make(map[string]any)}
 }
 
-// SetupApp takes a list of With* functions that will be applied to the Application
+// SetupApp takes a list of With* functions that will be applied to the Application.
 func (a App) SetupApp(ops ...setupOp) App {
 	a.ops = ops
 	return a
 }
 
-// Generate will apply all the settings and create the boilerplate files
+// Generate will apply all the settings and create the boilerplate files.
 func (a App) Generate() {
 	for _, op := range a.ops {
 		err := op(a)
@@ -171,7 +172,6 @@ func (App) WithConfig() setupOp {
 	}
 }
 
-
 // WithDependencies received a list of strings that are Go libraries that should only be updated with 'make golib-latest'
 func (a App) WithDependencies(deps ...string) setupOp {
 	a.settings[dependencies] = deps
@@ -231,7 +231,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 		if err == nil { // we have a go mod file, and we can replace the version
 			data, err := os.ReadFile(goModFile)
 			if err != nil {
-				return fmt.Errorf("unable to read go.mod file (%s): %s\n", goModFile, err)
+				return fmt.Errorf("unable to read go.mod file (%s): %s", goModFile, err)
 			}
 
 			pattern := regexp.MustCompile(`(?m)$\s*go \d+\.\d+(\.\d+)?\s*$`)
@@ -239,7 +239,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 
 			err = os.WriteFile(goModFile, newData, newFilePermission)
 			if err != nil {
-				return fmt.Errorf("unable to write go.mod file (%s): %s\n", goModFile, err)
+				return fmt.Errorf("unable to write go.mod file (%s): %s", goModFile, err)
 			}
 		}
 		return nil
@@ -306,11 +306,12 @@ func generateTemplate(args generateTemplateArgs) {
 	outputFileName := path.Join(args.outputSubDir, args.outputName)
 
 	if args.outputSubDir != "" {
-		err := os.MkdirAll(args.outputSubDir, 0755)
+		err := os.MkdirAll(args.outputSubDir, newDirPermission)
 		if err != nil {
 			panic(fmt.Errorf("unable to create directory structure (%s): %s", args.outputSubDir, err))
 		}
 	}
+	//nolint:gosec // G304 -- This is safe as the file is being opened for write/create/truncation - no reading
 	f, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, newFilePermission)
 	if err != nil {
 		panic(fmt.Errorf("unable to create file (%s): %s", outputFileName, err))
