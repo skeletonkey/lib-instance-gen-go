@@ -4,12 +4,12 @@
 //
 // Reference README.md for examples.
 //
-//	app := instance_gen.NewApp("rachio-next-run", "app")
-//	app.Setup(
-//		WithGithubWorkflows("linter", "test"),
-//		WithGoVersion("1.22"),
-//		WithMakefile(),
-//		WithPackages("logger", "pushover", "rachio"),
+//	app := instanceGen.NewApp("rachio-next-run", "app")
+//	app.SetupApp(
+//		app.WithGithubWorkflows("linter", "test"),
+//		app.WithGoVersion("1.23"),
+//		app.WithMakefile(),
+//		app.WithPackages("logger", "pushover", "rachio"),
 //	).Generate()
 //
 // Each generated file will be prepended with a 'warning' comment to not edit the file.
@@ -64,6 +64,10 @@ type App struct {
 	settings   map[string]any // misc settings
 }
 
+func noOp() setupOp {
+	return func (_ App) error {return nil}
+}
+
 // NewApp returns the struct for a new applications which allows for generating boilerplate files.
 //   - binaryName is used by the Makefile for the build command
 //   - dir is the subdirectory that packages will be created in
@@ -91,9 +95,9 @@ func (a App) Generate() {
 // This is provided for simple CODEOWNERS use cases to centralize all project configurations in the "init.go" file.
 // Each string provided will be written on a single line, which provides flexibility.
 // However, once the file becomes complicated, it will be best to create the file manually.
-func (_ App) WithCodeOwners(codeOwners ...string) setupOp {
+func (App) WithCodeOwners(codeOwners ...string) setupOp {
 	if len(codeOwners) == 0 {
-		return nil
+		return noOp()
 	}
 
 	return func(_ App) error {
@@ -107,7 +111,7 @@ func (_ App) WithCodeOwners(codeOwners ...string) setupOp {
 
 		warning, found := warnings[codeOwnersFileName]
 		if !found {
-			return fmt.Errorf("unable to file a 'warnings' entry for %s", codeOwnersFileName)
+			return fmt.Errorf("unable to find a 'warnings' entry for %s", codeOwnersFileName)
 		}
 		if _, err := file.WriteString(warning); err != nil {
 			return fmt.Errorf("unable to write warning to file (%s): %s", codeOwnersFileName, err)
@@ -123,7 +127,7 @@ func (_ App) WithCodeOwners(codeOwners ...string) setupOp {
 // WithPackages takes a list of strings which results in creating a skeleton subdirectory for each.
 // Foreach package listed the following will be created:
 //   - config.go - template to use github.com/skeletonkey/lib-core-go/config module
-func (_ App) WithPackages(packageNames ...string) setupOp {
+func (App) WithPackages(packageNames ...string) setupOp {
 	return func(a App) error {
 		for _, name := range packageNames {
 			packageName := name
@@ -146,11 +150,11 @@ func (_ App) WithPackages(packageNames ...string) setupOp {
 // WithCGOEnabled will add CGO_ENABLED=1 to the build statement
 func (a App) WithCGOEnabled() setupOp {
 	a.settings[cgoEnabled] = true
-	return nil
+	return noOp()
 }
 
 // WithConfig adds a config file for the main app. Config
-func (_ App) WithConfig() setupOp {
+func (App) WithConfig() setupOp {
 	return func(a App) error {
 		templateArgs := templateArgs{
 			ConfigName: a.dir,
@@ -167,17 +171,18 @@ func (_ App) WithConfig() setupOp {
 	}
 }
 
+
 // WithDependencies received a list of strings that are Go libraries that should only be updated with 'make golib-latest'
 func (a App) WithDependencies(deps ...string) setupOp {
 	a.settings[dependencies] = deps
-	return nil
+	return noOp()
 }
 
 // WithGithubWorkflows sets up the specified workflows.
 // Current supported work flows:
 //   - linter - on pull request for all branches
 //   - test - on pull request for all branches
-func (_ App) WithGithubWorkflows(flows ...string) setupOp {
+func (App) WithGithubWorkflows(flows ...string) setupOp {
 	return func(a App) error {
 		tmplArgs := templateArgs{}
 		if ver, ok := a.settings[goVersion]; !ok {
@@ -246,7 +251,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 //   - install - move binary to /usr/local/bin
 //   - golib-latest - install go dependencies
 //   - app-init - generate the boilerplate
-func (_ App) WithMakefile() setupOp {
+func (App) WithMakefile() setupOp {
 	return func(a App) error {
 		nodes, err := templatesFS.ReadDir(path.Join(templateBaseDir, mkfilesSubDir))
 		if err != nil {

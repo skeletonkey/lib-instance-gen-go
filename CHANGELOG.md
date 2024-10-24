@@ -1,3 +1,8 @@
+# v0.7.3
+- update to go1.23
+- add noOp function to correctly return With functions that only set app data
+- documentation fixes
+
 # v0.7.2
 - https://github.com/skeletonkey/lib-instance-gen-go/issues/18
   - update linters
