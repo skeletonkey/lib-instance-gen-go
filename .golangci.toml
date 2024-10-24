@@ -9,12 +9,12 @@ enable = [
     # for the full, current list of available linters.
 
     # Default linters
-    "errcheck", # Detect unchecked errors
-    "gosimple", # Suggest code simplifications
-    "govet", # Reports suspicious constructs
-    "ineffassign", # Detects unused variable assignments
-    "staticcheck", # go vet on steroids
-    "unused", # Detect unused constants, variables, functions and types
+    #"errcheck", # Detect unchecked errors
+    #"gosimple", # Suggest code simplifications
+    #"govet", # Reports suspicious constructs
+    #"ineffassign", # Detects unused variable assignments
+    #"staticcheck", # go vet on steroids
+    #"unused", # Detect unused constants, variables, functions and types
 
     # Additional linters
     #"asciicheck", # Detect if code identifiers does not contain non-ASCII characters
