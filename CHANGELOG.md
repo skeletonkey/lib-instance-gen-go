@@ -1,5 +1,6 @@
 # v0.7.3
 - update to go1.23
+- update github workflows
 - add noOp function to correctly return With functions that only set app data
 - documentation fixes
 
