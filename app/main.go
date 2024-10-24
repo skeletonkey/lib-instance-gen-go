@@ -4,12 +4,12 @@
 //
 // Reference README.md for examples.
 //
-//	app := instance_gen.NewApp("rachio-next-run", "app")
-//	app.Setup(
-//		WithGithubWorkflows("linter", "test"),
-//		WithGoVersion("1.22"),
-//		WithMakefile(),
-//		WithPackages("logger", "pushover", "rachio"),
+//	app := instanceGen.NewApp("rachio-next-run", "app")
+//	app.SetupApp(
+//		app.WithGithubWorkflows("linter", "test"),
+//		app.WithGoVersion("1.23"),
+//		app.WithMakefile(),
+//		app.WithPackages("logger", "pushover", "rachio"),
 //	).Generate()
 //
 // Each generated file will be prepended with a 'warning' comment to not edit the file.
@@ -35,6 +35,7 @@ const (
 	goModFile          = "go.mod"
 	goVersion          = "GoVersion"
 	mkfilesSubDir      = "Makefile"
+	newDirPermission   = 0750
 	newFilePermission  = 0644
 	templateBaseDir    = "templates"
 	warning            = "lib-instance-gen-go: File auto generated -- DO NOT EDIT!!!\n"
@@ -56,12 +57,16 @@ var warnings = map[string]string{
 	"yml":              "# " + warning,
 }
 
-// App struct containing necessary information for a new application
+// App struct containing necessary information for a new application.
 type App struct {
 	binaryName string         // name of the binary the 'make' will produce
 	dir        string         // subdirectory which will contain the program's source code
 	ops        []setupOp      // list of operations to perform during Generate method
 	settings   map[string]any // misc settings
+}
+
+func noOp() setupOp {
+	return func(_ App) error { return nil }
 }
 
 // NewApp returns the struct for a new applications which allows for generating boilerplate files.
@@ -71,13 +76,13 @@ func NewApp(binaryName string, dir string) App {
 	return App{binaryName: binaryName, dir: dir, settings: make(map[string]any)}
 }
 
-// SetupApp takes a list of With* functions that will be applied to the Application
+// SetupApp takes a list of With* functions that will be applied to the Application.
 func (a App) SetupApp(ops ...setupOp) App {
 	a.ops = ops
 	return a
 }
 
-// Generate will apply all the settings and create the boilerplate files
+// Generate will apply all the settings and create the boilerplate files.
 func (a App) Generate() {
 	for _, op := range a.ops {
 		err := op(a)
@@ -91,9 +96,9 @@ func (a App) Generate() {
 // This is provided for simple CODEOWNERS use cases to centralize all project configurations in the "init.go" file.
 // Each string provided will be written on a single line, which provides flexibility.
 // However, once the file becomes complicated, it will be best to create the file manually.
-func (_ App) WithCodeOwners(codeOwners ...string) setupOp {
+func (App) WithCodeOwners(codeOwners ...string) setupOp {
 	if len(codeOwners) == 0 {
-		return nil
+		return noOp()
 	}
 
 	return func(_ App) error {
@@ -107,7 +112,7 @@ func (_ App) WithCodeOwners(codeOwners ...string) setupOp {
 
 		warning, found := warnings[codeOwnersFileName]
 		if !found {
-			return fmt.Errorf("unable to file a 'warnings' entry for %s", codeOwnersFileName)
+			return fmt.Errorf("unable to find a 'warnings' entry for %s", codeOwnersFileName)
 		}
 		if _, err := file.WriteString(warning); err != nil {
 			return fmt.Errorf("unable to write warning to file (%s): %s", codeOwnersFileName, err)
@@ -123,7 +128,7 @@ func (_ App) WithCodeOwners(codeOwners ...string) setupOp {
 // WithPackages takes a list of strings which results in creating a skeleton subdirectory for each.
 // Foreach package listed the following will be created:
 //   - config.go - template to use github.com/skeletonkey/lib-core-go/config module
-func (_ App) WithPackages(packageNames ...string) setupOp {
+func (App) WithPackages(packageNames ...string) setupOp {
 	return func(a App) error {
 		for _, name := range packageNames {
 			packageName := name
@@ -146,11 +151,11 @@ func (_ App) WithPackages(packageNames ...string) setupOp {
 // WithCGOEnabled will add CGO_ENABLED=1 to the build statement
 func (a App) WithCGOEnabled() setupOp {
 	a.settings[cgoEnabled] = true
-	return nil
+	return noOp()
 }
 
 // WithConfig adds a config file for the main app. Config
-func (_ App) WithConfig() setupOp {
+func (App) WithConfig() setupOp {
 	return func(a App) error {
 		templateArgs := templateArgs{
 			ConfigName: a.dir,
@@ -170,14 +175,14 @@ func (_ App) WithConfig() setupOp {
 // WithDependencies received a list of strings that are Go libraries that should only be updated with 'make golib-latest'
 func (a App) WithDependencies(deps ...string) setupOp {
 	a.settings[dependencies] = deps
-	return nil
+	return noOp()
 }
 
 // WithGithubWorkflows sets up the specified workflows.
 // Current supported work flows:
 //   - linter - on pull request for all branches
 //   - test - on pull request for all branches
-func (_ App) WithGithubWorkflows(flows ...string) setupOp {
+func (App) WithGithubWorkflows(flows ...string) setupOp {
 	return func(a App) error {
 		tmplArgs := templateArgs{}
 		if ver, ok := a.settings[goVersion]; !ok {
@@ -226,7 +231,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 		if err == nil { // we have a go mod file, and we can replace the version
 			data, err := os.ReadFile(goModFile)
 			if err != nil {
-				return fmt.Errorf("unable to read go.mod file (%s): %s\n", goModFile, err)
+				return fmt.Errorf("unable to read go.mod file (%s): %s", goModFile, err)
 			}
 
 			pattern := regexp.MustCompile(`(?m)$\s*go \d+\.\d+(\.\d+)?\s*$`)
@@ -234,7 +239,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 
 			err = os.WriteFile(goModFile, newData, newFilePermission)
 			if err != nil {
-				return fmt.Errorf("unable to write go.mod file (%s): %s\n", goModFile, err)
+				return fmt.Errorf("unable to write go.mod file (%s): %s", goModFile, err)
 			}
 		}
 		return nil
@@ -246,7 +251,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 //   - install - move binary to /usr/local/bin
 //   - golib-latest - install go dependencies
 //   - app-init - generate the boilerplate
-func (_ App) WithMakefile() setupOp {
+func (App) WithMakefile() setupOp {
 	return func(a App) error {
 		nodes, err := templatesFS.ReadDir(path.Join(templateBaseDir, mkfilesSubDir))
 		if err != nil {
@@ -301,11 +306,12 @@ func generateTemplate(args generateTemplateArgs) {
 	outputFileName := path.Join(args.outputSubDir, args.outputName)
 
 	if args.outputSubDir != "" {
-		err := os.MkdirAll(args.outputSubDir, 0755)
+		err := os.MkdirAll(args.outputSubDir, newDirPermission)
 		if err != nil {
 			panic(fmt.Errorf("unable to create directory structure (%s): %s", args.outputSubDir, err))
 		}
 	}
+	//nolint:gosec // G304 -- This is safe as the file is being opened for write/create/truncation - no reading
 	f, err := os.OpenFile(outputFileName, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, newFilePermission)
 	if err != nil {
 		panic(fmt.Errorf("unable to create file (%s): %s", outputFileName, err))

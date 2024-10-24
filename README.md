@@ -35,7 +35,7 @@ func main() {
         ),
         app.WithGithubWorkflows("linter", "test"),
         app.WithMakefile(),
-        app.WithGoVersion("1.22"),
+        app.WithGoVersion("1.23"),
         app.WithPackages("logger", "pushover", "rachio"),
     ).Generate()
 
