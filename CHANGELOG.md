@@ -1,3 +1,6 @@
+# v0.8.0
+- withMakefile accepts an optional list of strings to allow for customer Makefiles
+
 # v0.7.3
 - update to go1.23
 - update github workflows

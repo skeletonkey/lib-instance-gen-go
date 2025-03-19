@@ -251,7 +251,11 @@ func (a App) WithGoVersion(ver string) setupOp {
 //   - install - move binary to /usr/local/bin
 //   - golib-latest - install go dependencies
 //   - app-init - generate the boilerplate
-func (App) WithMakefile() setupOp {
+//
+// Method accepts a list of strings which will be used to create "include" statements.
+// Each string will be concatenated with "Makefile.". This allows for custom "make" commands
+// for a project. These customer make files will not be generated nor effected by app-init.
+func (App) WithMakefile(makeExt ...string) setupOp {
 	return func(a App) error {
 		nodes, err := templatesFS.ReadDir(path.Join(templateBaseDir, mkfilesSubDir))
 		if err != nil {
@@ -262,12 +266,17 @@ func (App) WithMakefile() setupOp {
 		if yes, ok := a.settings[cgoEnabled]; ok && yes.(bool) {
 			tmplArgs.BuildEnvArgs = "CGO_ENABLED=1 "
 		}
+
 		if deps, ok := a.settings[dependencies]; ok {
 			depString := ""
 			for _, dep := range deps.([]string) {
 				depString = fmt.Sprintf("%sgo get -u %s@latest\n\t", depString, dep)
 			}
 			tmplArgs.Dependencies = depString
+		}
+
+		for _, ext := range makeExt {
+			tmplArgs.Includes = fmt.Sprintf("%sinclude Makefile.%s\n", tmplArgs.Includes, ext)
 		}
 
 		for _, node := range nodes {
@@ -298,6 +307,7 @@ type templateArgs struct {
 	ConfigName   string // name of the config element for the main program
 	Dependencies string // see WithDependencies
 	GoVersion    string // see WithGoVersion
+	Includes     string // custom Makefile.{name} to be included - specified by WithMakefile
 	PackageName  string // name of the package
 }
 
