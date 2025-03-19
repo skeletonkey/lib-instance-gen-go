@@ -1,5 +1,7 @@
 .DEFAULT_GOAL=build
 
+{{.Includes}}
+
 build:
 	go fmt ./...
 	go vet ./...
