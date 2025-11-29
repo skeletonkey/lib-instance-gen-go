@@ -11,8 +11,8 @@ See godocs for specifics.
 Create an 'init' go file in the root of your repository and use `go generate`.
 This will create the skeleton of your application with boiler code providing the following:
 
- * config ingestion
- * logging (utilizes zerolog)
+- config ingestion
+- logging (utilizes zerolog)
 
 ### Example File
 

@@ -71,9 +71,21 @@ func noOp() setupOp {
 
 // NewApp returns the struct for a new applications which allows for generating boilerplate files.
 //   - binaryName is used by the Makefile for the build command
-//   - dir is the subdirectory that packages will be created in
-func NewApp(binaryName string, dir string) App {
-	return App{binaryName: binaryName, dir: dir, settings: make(map[string]any)}
+//   - dir is the subdirectory that packages will be created in if not provided then 'internal' is used
+func NewApp(inputs ...string) App {
+	binaryName := inputs[0]
+	if binaryName == "" {
+		panic("Usage: NewApp(binaryName string, dir string) App - binaryName cannot be empty")
+	}
+	dir := "internal" // Go communities standard for internal packages
+	if len(inputs) >= 2 {
+		dir = inputs[1]
+		if dir == "" {
+			panic("Usage: NewApp(binaryName string, dir string) App - dir cannot be empty")
+		}
+	}
+
+	return App{binaryName: inputs[0], dir: dir, settings: make(map[string]any)}
 }
 
 // SetupApp takes a list of With* functions that will be applied to the Application.
