@@ -13,7 +13,7 @@ formatters:
 
   settings:
     gofumpt:
-      module-path: github.com/skeletonkey/lib-core-go
+      module-path: github.com/skeletonkey/lib-instance-gen-go
       extra-rules: true
 
 linters:
