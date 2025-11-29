@@ -1,0 +1,67 @@
+version: "2"
+
+run:
+  concurrency: 4
+  issues-exit-code: 1
+  modules-download-mode: readonly
+  tests: true
+  timeout: 5m
+
+formatters:
+  enable:
+    - gofumpt
+
+  settings:
+    gofumpt:
+      module-path: github.com/skeletonkey/lib-core-go
+      extra-rules: true
+
+linters:
+  settings:
+    errorlint:
+      errorf: false
+
+    govet:
+      enable-all: true
+
+    misspell:
+      locale: US
+
+    nolintlint:
+      allow-no-explanation: []
+      allow-unused: false
+      require-explanation: true
+      require-specific: true
+
+    revive:
+      confidence: 0.8
+
+  enable:
+    - asciicheck
+    - bodyclose
+    - copyloopvar
+    - cyclop
+    - dogsled
+    - durationcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - gochecknoglobals
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gosec
+    - govet
+    - makezero
+    - misspell
+    - nestif
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - revive
+    - staticcheck
+    - tparallel
+    - unconvert
+    - wastedassign
+    - whitespace
