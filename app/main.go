@@ -254,7 +254,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 //
 // Method accepts a list of strings which will be used to create "include" statements.
 // Each string will be concatenated with "Makefile.". This allows for custom "make" commands
-// for a project. These customer make files will not be generated nor effected by app-init.
+// for a project. These custom make files will not be generated nor effected by app-init.
 func (App) WithMakefile(makeExt ...string) setupOp {
 	return func(a App) error {
 		nodes, err := templatesFS.ReadDir(path.Join(templateBaseDir, mkfilesSubDir))
