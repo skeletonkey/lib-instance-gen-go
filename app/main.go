@@ -85,7 +85,7 @@ func NewApp(inputs ...string) App {
 		}
 	}
 
-	return App{binaryName: inputs[0], dir: dir, settings: make(map[string]any)}
+	return App{binaryName: binaryName, dir: dir, settings: make(map[string]any)}
 }
 
 // SetupApp takes a list of With* functions that will be applied to the Application.
@@ -220,11 +220,11 @@ func (App) WithGithubWorkflows(flows ...string) setupOp {
 
 		if linterPresent {
 			generateTemplate(generateTemplateArgs{
-				fileType:       "toml",
-				outputName:     ".golangci.toml",
+				fileType:       "yml",
+				outputName:     ".golangci.yml",
 				outputSubDir:   "",
 				templateArgs:   templateArgs{},
-				templateName:   ".golangci.toml",
+				templateName:   ".golangci.yml",
 				templateSubDir: "",
 			})
 		}
