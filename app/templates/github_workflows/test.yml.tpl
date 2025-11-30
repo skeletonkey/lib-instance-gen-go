@@ -7,15 +7,13 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Set up Go
-      uses: actions/setup-go@v5
-      with:
-        go-version-file: go.mod
+      uses: actions/setup-go@v6.1
 
-    - name: Build
-      run: go build -v ./...
+    - name: Download dependencies
+      run: go mod tidy
 
     - name: Test
-      uses: robherley/go-test-action@v0
+      run: go test -v ./...

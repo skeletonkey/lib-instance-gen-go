@@ -71,8 +71,20 @@ func noOp() setupOp {
 
 // NewApp returns the struct for a new applications which allows for generating boilerplate files.
 //   - binaryName is used by the Makefile for the build command
-//   - dir is the subdirectory that packages will be created in
-func NewApp(binaryName string, dir string) App {
+//   - dir is the subdirectory that packages will be created in if not provided then 'internal' is used
+func NewApp(inputs ...string) App {
+	binaryName := inputs[0]
+	if binaryName == "" {
+		panic("Usage: NewApp(binaryName string, dir string) App - binaryName cannot be empty")
+	}
+	dir := "internal" // Go communities standard for internal packages
+	if len(inputs) >= 2 {
+		dir = inputs[1]
+		if dir == "" {
+			panic("Usage: NewApp(binaryName string, dir string) App - dir cannot be empty")
+		}
+	}
+
 	return App{binaryName: binaryName, dir: dir, settings: make(map[string]any)}
 }
 
@@ -208,11 +220,11 @@ func (App) WithGithubWorkflows(flows ...string) setupOp {
 
 		if linterPresent {
 			generateTemplate(generateTemplateArgs{
-				fileType:       "toml",
-				outputName:     ".golangci.toml",
+				fileType:       "yml",
+				outputName:     ".golangci.yml",
 				outputSubDir:   "",
 				templateArgs:   templateArgs{},
-				templateName:   ".golangci.toml",
+				templateName:   ".golangci.yml",
 				templateSubDir: "",
 			})
 		}
@@ -254,7 +266,7 @@ func (a App) WithGoVersion(ver string) setupOp {
 //
 // Method accepts a list of strings which will be used to create "include" statements.
 // Each string will be concatenated with "Makefile.". This allows for custom "make" commands
-// for a project. These customer make files will not be generated nor effected by app-init.
+// for a project. These custom make files will not be generated nor effected by app-init.
 func (App) WithMakefile(makeExt ...string) setupOp {
 	return func(a App) error {
 		nodes, err := templatesFS.ReadDir(path.Join(templateBaseDir, mkfilesSubDir))
